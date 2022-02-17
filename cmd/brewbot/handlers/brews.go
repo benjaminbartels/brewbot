@@ -123,7 +123,7 @@ func (h *BrewsHandler) handleLog(ctx context.Context, s *discordgo.Session, i *d
 
 	brew := &dynamo.Brew{
 		UserID:   user.ID,
-		Username: user.Username,
+		Username: i.Member.Nick,
 		Style:    style,
 		Amount:   floatAmount,
 	}
@@ -256,7 +256,7 @@ func (h *BrewsHandler) handleLeaderboard(ctx context.Context, s *discordgo.Sessi
 	fmt.Fprintln(writer, "\tName\tTotal")
 
 	for i, entry := range leaderboard {
-		fmt.Fprintf(writer, "%d\t%s\t%6.02f", i+1, entry.name, entry.total)
+		fmt.Fprintf(writer, "%d\t%s\t%6.02f\t\n", i+1, entry.name, entry.total)
 	}
 
 	if err := writer.Flush(); err != nil {
