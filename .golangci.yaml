@@ -1,0 +1,140 @@
+---
+
+run:
+  timeout: 1m
+  issues-exit-code: 1
+  tests: true
+  modules-download-mode: readonly
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+linters:
+  enable:
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - contextcheck
+    - cyclop
+    - deadcode
+    - depguard
+    - dogsled
+    - dupl
+    - durationcheck
+    - errcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - funlen
+    - gci
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - goerr113
+    - gofmt
+    - gofumpt
+    - goheader
+    - goimports
+    - gomnd
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ifshort
+    - importas
+    - ineffassign
+    - ireturn
+    - lll
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - nlreturn
+    - noctx
+    - nolintlint
+    - paralleltest
+    - prealloc
+    - predeclared
+    - promlinter
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - tagliatelle
+    - tenv
+    - testpackage
+    - thelper
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - wastedassign
+    - whitespace
+    - wrapcheck
+    - wsl
+  disable:
+    - exhaustivestruct          # Not recommended globally
+    - godox                     # Need to be able to commit code with TODO
+    - golint                    # Deprecated
+    - interfacer                # Deprecated
+    - maligned                  # Deprecated
+    - scopelint                 # Deprecated
+    - varnamelen                # Way too opinionated
+linters-settings:
+  funlen:
+    lines: -1
+  gomnd:
+    settings:
+      mnd:
+        ignored-functions: strconv.ParseFloat,math.Round,make,tabwriter.NewWriter
+        ignored-numbers: 32,100,1000
+  ireturn:
+    allow:
+      - anon
+      - error
+      - empty
+      - stdlib
+      - device.Thermometer
+      - device.Hydrometer
+      - device.ThermometerAndHydrometer
+      - device.Actuator
+  wrapcheck:
+    ignoreSigs:
+      - .Errorf(
+      - errors.New(
+      - errors.Unwrap(
+      - .Wrap(
+      - .Wrapf(
+      - .WithMessage(
+      - .WithMessagef(
+      - .WithStack(
+      - .NewRequestError(       # used in create RequestError
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-use-default: true
+  exclude-rules:
+    - path: _test\.go     # Exclude some linters from running on tests files.
+      linters:
+        - funlen          # Tests are long sometimes
+        - goerr113        # Tests can return dynamic errors
+        - ifshort         # 'expected' variables don't need use short syntax
+    - linters:
+        - lll             # Exclude lll issues for long lines with go:generate
+      source: "^//go:generate "

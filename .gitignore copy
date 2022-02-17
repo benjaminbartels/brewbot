@@ -15,4 +15,4 @@
 # vendor/
 
 shared-local-instance.db
-*.env
+dev.env

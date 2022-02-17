@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  brewbot:
+    build: .
+    image: brewbot
+    env_file:
+      - dev.env
+  dynamo:
+    image: amazon/dynamodb-local
+    volumes:
+      - .:/data
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"

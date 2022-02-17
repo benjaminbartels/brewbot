@@ -1,2 +1,2 @@
 # brewbot
-A Discord bot for tracking homebrewed beer
+Discord Bot used to track how many gallons of homebrew a user brewers
