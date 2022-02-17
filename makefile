@@ -36,34 +36,6 @@ tidy: ## Add missing and remove unused modules
 vendor: ## Copy of all packages needed to support builds and tests in the vendor directory
 	$(GOCMD) mod vendor
 
-watch: ## Run the code with Air to have automatic reload on changes
-	$(eval PACKAGE_NAME=$(shell head -n 1 go.mod | cut -d ' ' -f2))
-	docker run -it --rm \
-	-p $(SERVICE_PORT):$(SERVICE_PORT) \
-	--env-file=configs/dev.env \
-	-w /$(PACKAGE_NAME)/$(MAIN_DIR) \
-	-v $(shell pwd):/$(PACKAGE_NAME) \
-	cosmtrek/air
-
-debug: ## Run the code with Delve to debug
-	DOCKER_BUILDKIT=1 docker build -t $(BINARY_NAME)-debug --target debugger  .
-	docker run -it --rm \
-	-p $(SERVICE_PORT):$(SERVICE_PORT) -p $(DELVE_PORT):$(DELVE_PORT) \
-	--env-file=configs/dev.env \
-	$(BINARY_NAME)-debug
-
-## Test:
-test: ## Run the tests of the project
-	$(GOTEST) -v ./... -race
-
-coverage: ## Generate code coverge report
-	$(GOTEST) -v -covermode=atomic -coverpkg=./... -coverprofile=profile.cov  ./...
-	$(GOCMD) tool cover -func profile.cov
-ifeq ($(EXPORT_RESULT), true)
-	go install github.com/AlekSi/gocov-xml@latest
-	go install github.com/axw/gocov/gocov@latest
-	gocov convert profile.cov | gocov-xml > coverage.xml
-endif	
 
 ## Lint:
 lint: lint-go lint-yaml  ## Run all linters

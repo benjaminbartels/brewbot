@@ -43,7 +43,11 @@ data "aws_iam_policy_document" "brewbot_role_policy" {
       "dynamodb:PutItem",
       "dynamodb:DeleteItem"
     ]
-    resources = [aws_dynamodb_table.brews-table.arn]
+    resources = [
+      aws_dynamodb_table.brews-table.arn,
+      "${aws_dynamodb_table.brews-table.arn}/index/*",
+
+    ]
   }
 
 

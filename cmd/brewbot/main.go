@@ -24,7 +24,7 @@ const localDynamoEndpoint = "http://dynamo:8000"
 
 type config struct {
 	AWSRegion      string `default:"us-west-2"`
-	BrewTableName  string `default:"brewbot-brews"`
+	BrewTableName  string `default:"BeerBot-Brews"`
 	UseLocalDynamo bool   `default:"false"`
 	DiscordToken   string `required:"true"`
 	DiscordGuildID string `required:"true"`
