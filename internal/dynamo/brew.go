@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/google/uuid"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/pkg/errors"
 )
 
@@ -124,7 +124,11 @@ func (r *BrewDB) Save(ctx context.Context, brew *Brew) error {
 	brew.TypeName = "Brew"
 
 	if brew.ID == "" {
-		brew.ID = uuid.NewString()
+		id, err := gonanoid.New()
+		if err != nil {
+			return errors.Wrap(err, "could not create uuid")
+		}
+		brew.ID = id
 		brew.CreatedAt = time.Now().UTC().Format(time.RFC3339)
 	}
 
