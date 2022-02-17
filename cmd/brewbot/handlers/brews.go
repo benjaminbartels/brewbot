@@ -121,9 +121,14 @@ func (h *BrewsHandler) handleLog(ctx context.Context, s *discordgo.Session, i *d
 		return nil
 	}
 
+	name := user.Username
+	if i.Member.Nick != "" {
+		name = i.Member.Nick
+	}
+
 	brew := &dynamo.Brew{
 		UserID:   user.ID,
-		Username: i.Member.Nick,
+		Username: name,
 		Style:    style,
 		Amount:   floatAmount,
 	}
@@ -132,7 +137,7 @@ func (h *BrewsHandler) handleLog(ctx context.Context, s *discordgo.Session, i *d
 		return errors.Wrap(err, "could not save brew")
 	}
 
-	message := fmt.Sprintf("%s brewed %0.2f gallons of %s!", user.Username, floatAmount, style)
+	message := fmt.Sprintf("%s brewed %0.2f gallons of %s!", name, floatAmount, style)
 	if err := respondToChannel(s, i, message, false); err != nil {
 		return errors.Wrap(err, "could not respond with log success message")
 	}
@@ -201,7 +206,7 @@ func (h *BrewsHandler) handleDelete(ctx context.Context, s *discordgo.Session, i
 		return errors.Wrapf(err, "could not delete brew %s", id)
 	}
 
-	if err := respondToChannel(s, i, fmt.Sprintf("Deleted %s's %s brew", user.Username, id), false); err != nil {
+	if err := respondToChannel(s, i, fmt.Sprintf("Deleted %s's %s brew", user.Username, id), true); err != nil {
 		return errors.Wrap(err, "could not respond with delete success message")
 	}
 
