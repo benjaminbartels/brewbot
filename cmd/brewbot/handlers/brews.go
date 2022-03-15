@@ -215,7 +215,8 @@ func (h *BrewsHandler) handleDelete(ctx context.Context, s *discordgo.Session, i
 
 func (h *BrewsHandler) handleLeaderboard(ctx context.Context, s *discordgo.Session,
 	i *discordgo.InteractionCreate) error {
-	totals := make(map[string]float64)
+	volumes := make(map[string]float64)
+	counts := make(map[string]int)
 
 	brews, err := h.Repo.GetAll(ctx)
 	if err != nil {
@@ -231,38 +232,52 @@ func (h *BrewsHandler) handleLeaderboard(ctx context.Context, s *discordgo.Sessi
 	}
 
 	for _, brew := range brews {
-		v, ok := totals[brew.Username]
+		v, ok := volumes[brew.Username]
 		if !ok {
-			totals[brew.Username] = brew.Amount
+			volumes[brew.Username] = brew.Amount
+			counts[brew.Username] = 1
 		} else {
-			totals[brew.Username] = v + brew.Amount
+			volumes[brew.Username] = v + brew.Amount
+			counts[brew.Username]++
 		}
 	}
 
-	type listing struct {
-		name  string
-		total float64
+	type leaderboardItem struct {
+		name   string
+		count  int
+		volume float64
 	}
 
-	leaderboard := make([]listing, 0, len(totals))
+	leaderboard := make([]leaderboardItem, 0, len(volumes))
 
-	for name, total := range totals {
-		leaderboard = append(leaderboard, listing{name: name, total: total})
+	for name, volume := range volumes {
+		leaderboard = append(leaderboard, leaderboardItem{name: name, count: counts[name], volume: volume})
 	}
 
 	sort.Slice(leaderboard, func(i, j int) bool {
-		return leaderboard[i].total > leaderboard[j].total
+		return leaderboard[i].volume > leaderboard[j].volume
 	})
 
 	var builder strings.Builder
 
 	writer := tabwriter.NewWriter(&builder, 0, 5, 2, ' ', 0)
 
-	fmt.Fprintln(writer, "\tName\tTotal")
+	fmt.Fprintln(writer, "\tName\tCount\tGallons")
 
-	for i, entry := range leaderboard {
-		fmt.Fprintf(writer, "%d\t%s\t%6.02f\t\n", i+1, entry.name, entry.total)
+	var (
+		totalCount  int
+		totalVolume float64
+	)
+
+	for i, item := range leaderboard {
+		fmt.Fprintf(writer, "%d\t%s\t%d\t%6.02f\t\n", i+1, item.name, item.count, item.volume)
+		totalCount += item.count
+		totalVolume += item.volume
 	}
+
+	fmt.Fprintf(writer, "---------------------------------------\n")
+
+	fmt.Fprintf(writer, "Total Batches: %d Total Volume: %6.02f\n", totalCount, totalVolume)
 
 	if err := writer.Flush(); err != nil {
 		return errors.Wrap(err, "could not flush to channel")
