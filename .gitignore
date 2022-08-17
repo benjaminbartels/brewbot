@@ -17,3 +17,4 @@
 shared-local-instance.db
 *.env
 .terraform
+.DS_Store
