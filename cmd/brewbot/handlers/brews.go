@@ -275,6 +275,10 @@ func (h *BrewsHandler) handleLeaderboard(ctx context.Context, s *discordgo.Sessi
 		totalVolume += item.volume
 	}
 
+	fmt.Fprintf(writer, "---------------------------------------\n")
+
+	fmt.Fprintf(writer, "Total Batches: %d Total Volume: %6.02f\n", totalCount, totalVolume)
+
 	if err := writer.Flush(); err != nil {
 		return errors.Wrap(err, "could not flush to channel")
 	}
