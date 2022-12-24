@@ -14,6 +14,8 @@ import (
 
 var _ BrewRepo = (*BrewDB)(nil)
 
+var cutoff = time.Date(2022, time.December, 15, 0, 0, 0, 0, time.UTC)
+
 type BrewDB struct {
 	client    *dynamodb.Client
 	tableName string
@@ -84,7 +86,20 @@ func (r *BrewDB) GetAll(ctx context.Context) ([]Brew, error) { // TODO: this is 
 		return nil, errors.Wrap(err, "could not unmarshal items")
 	}
 
-	return brews, nil
+	result := []Brew{}
+
+	for _, brew := range brews {
+		createdAt, err := time.Parse(time.RFC3339, brew.CreatedAt)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could parse date %s", brew.CreatedAt)
+		}
+
+		if createdAt.After(cutoff) {
+			result = append(result, brew)
+		}
+	}
+
+	return result, nil
 }
 
 func (r *BrewDB) GetByUserID(ctx context.Context, userID string) ([]Brew, error) {
@@ -117,7 +132,20 @@ func (r *BrewDB) GetByUserID(ctx context.Context, userID string) ([]Brew, error)
 		return nil, errors.Wrap(err, "could not unmarshal items")
 	}
 
-	return brews, nil
+	result := []Brew{}
+
+	for _, brew := range brews {
+		createdAt, err := time.Parse(time.RFC3339, brew.CreatedAt)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could parse date %s", brew.CreatedAt)
+		}
+
+		if createdAt.After(cutoff) {
+			result = append(result, brew)
+		}
+	}
+
+	return result, nil
 }
 
 func (r *BrewDB) Save(ctx context.Context, brew *Brew) error {
@@ -128,6 +156,7 @@ func (r *BrewDB) Save(ctx context.Context, brew *Brew) error {
 		if err != nil {
 			return errors.Wrap(err, "could not create uuid")
 		}
+
 		brew.ID = id
 		brew.CreatedAt = time.Now().UTC().Format(time.RFC3339)
 	}
