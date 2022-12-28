@@ -281,30 +281,26 @@ func (h *BrewsHandler) handleLeaderboard(ctx context.Context, s *discordgo.Sessi
 }
 
 func (h *BrewsHandler) refreshLeaderboard(ctx context.Context, userID string) error {
+	entry, err := h.LeaderboardRepo.Get(ctx, userID)
+	if err != nil {
+		return errors.Wrapf(err, "could not get brew for user %s", userID)
+	}
+
+	entry.Count = 0
+	entry.Volume = 0
+
 	brews, err := h.BrewRepo.GetByUserID(ctx, userID, h.LeaderboardCutoff.String())
 	if err != nil {
 		return errors.Wrapf(err, "could not get brew for user %s", userID)
 	}
 
-	var (
-		count  int
-		volume float64
-	)
-
 	for _, brew := range brews {
-		count++
+		entry.Count++
 
-		volume += brew.Amount
+		entry.Volume += brew.Amount
 	}
 
-	entry := dynamo.LeaderboardEntry{
-		UserID:   userID,
-		Username: brews[0].Username,
-		Count:    count,
-		Volume:   volume,
-	}
-
-	if err := h.LeaderboardRepo.Save(ctx, &entry); err != nil {
+	if err := h.LeaderboardRepo.Save(ctx, entry); err != nil {
 		return errors.Wrapf(err, "could not get save LeaderboardEntry for %s", userID)
 	}
 
