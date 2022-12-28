@@ -114,3 +114,18 @@ func (r *LeaderboardDB) Save(ctx context.Context, leaderboardEntry *LeaderboardE
 
 	return nil
 }
+
+func (r *LeaderboardDB) Delete(ctx context.Context, userID string) error {
+	deleteItemInput := &dynamodb.DeleteItemInput{
+		TableName: aws.String(r.tableName),
+		Key: map[string]types.AttributeValue{
+			"userId": &types.AttributeValueMemberS{Value: userID},
+		},
+	}
+
+	if _, err := r.client.DeleteItem(ctx, deleteItemInput); err != nil {
+		return errors.Wrap(err, "could delete leaderboard entry item")
+	}
+
+	return nil
+}

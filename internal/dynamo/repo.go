@@ -13,4 +13,5 @@ type LeaderboardRepo interface {
 	Get(ctx context.Context, userID string) (*LeaderboardEntry, error)
 	GetAll(ctx context.Context) ([]LeaderboardEntry, error)
 	Save(ctx context.Context, leaderboardEntry *LeaderboardEntry) error
+	Delete(ctx context.Context, id string) error
 }

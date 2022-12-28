@@ -292,7 +292,11 @@ func (h *BrewsHandler) refreshLeaderboard(ctx context.Context, userID string) er
 	}
 
 	if len(brews) == 0 {
-		return errors.New("no brews found")
+		if err := h.LeaderboardRepo.Delete(ctx, userID); err != nil {
+			return errors.Wrapf(err, "could not get delete LeaderboardEntry for %s", userID)
+		}
+
+		return nil
 	}
 
 	entry, err := h.LeaderboardRepo.Get(ctx, userID)
