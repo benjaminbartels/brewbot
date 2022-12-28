@@ -14,8 +14,6 @@ import (
 
 var _ BrewRepo = (*BrewDB)(nil)
 
-var cutoff = time.Date(2022, time.December, 15, 0, 0, 0, 0, time.UTC)
-
 type BrewDB struct {
 	client    *dynamodb.Client
 	tableName string
@@ -65,44 +63,7 @@ func (r *BrewDB) Get(ctx context.Context, id string) (*Brew, error) {
 	return brew, nil
 }
 
-func (r *BrewDB) GetAll(ctx context.Context) ([]Brew, error) { // TODO: this is inefficient, fix later
-	scanInput := &dynamodb.ScanInput{
-		TableName: aws.String(r.tableName),
-	}
-
-	scanOutput, err := r.client.Scan(ctx, scanInput)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not scan items")
-	}
-
-	if scanOutput == nil || scanOutput.Items == nil || len(scanOutput.Items) == 0 {
-		return nil, nil
-	}
-
-	brews := []Brew{}
-
-	err = attributevalue.UnmarshalListOfMaps(scanOutput.Items, &brews)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not unmarshal items")
-	}
-
-	result := []Brew{}
-
-	for _, brew := range brews {
-		createdAt, err := time.Parse(time.RFC3339, brew.CreatedAt)
-		if err != nil {
-			return nil, errors.Wrapf(err, "could parse date %s", brew.CreatedAt)
-		}
-
-		if createdAt.After(cutoff) {
-			result = append(result, brew)
-		}
-	}
-
-	return result, nil
-}
-
-func (r *BrewDB) GetByUserID(ctx context.Context, userID string) ([]Brew, error) {
+func (r *BrewDB) GetByUserID(ctx context.Context, userID, createdAfter string) ([]Brew, error) {
 	queryInput := &dynamodb.QueryInput{
 		TableName: aws.String(r.tableName),
 		IndexName: aws.String("byUserId"),
@@ -111,6 +72,12 @@ func (r *BrewDB) GetByUserID(ctx context.Context, userID string) ([]Brew, error)
 				ComparisonOperator: types.ComparisonOperatorEq,
 				AttributeValueList: []types.AttributeValue{
 					&types.AttributeValueMemberS{Value: userID},
+				},
+			},
+			"createdAt": {
+				ComparisonOperator: types.ComparisonOperatorGt,
+				AttributeValueList: []types.AttributeValue{
+					&types.AttributeValueMemberS{Value: createdAfter},
 				},
 			},
 		},
@@ -132,20 +99,7 @@ func (r *BrewDB) GetByUserID(ctx context.Context, userID string) ([]Brew, error)
 		return nil, errors.Wrap(err, "could not unmarshal items")
 	}
 
-	result := []Brew{}
-
-	for _, brew := range brews {
-		createdAt, err := time.Parse(time.RFC3339, brew.CreatedAt)
-		if err != nil {
-			return nil, errors.Wrapf(err, "could parse date %s", brew.CreatedAt)
-		}
-
-		if createdAt.After(cutoff) {
-			result = append(result, brew)
-		}
-	}
-
-	return result, nil
+	return brews, nil
 }
 
 func (r *BrewDB) Save(ctx context.Context, brew *Brew) error {

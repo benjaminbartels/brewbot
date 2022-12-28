@@ -3,10 +3,10 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/benjaminbartels/brewbot/internal/dynamo"
 	"github.com/bwmarrin/discordgo"
@@ -23,8 +23,10 @@ const (
 )
 
 type BrewsHandler struct {
-	Repo   dynamo.BrewRepo
-	Logger *logrus.Logger
+	BrewRepo          dynamo.BrewRepo
+	LeaderboardRepo   dynamo.LeaderboardRepo
+	LeaderboardCutoff time.Time
+	Logger            *logrus.Logger
 }
 
 func BrewCommand() *discordgo.ApplicationCommand {
@@ -109,7 +111,8 @@ func (h *BrewsHandler) BrewHandler(s *discordgo.Session, i *discordgo.Interactio
 }
 
 func (h *BrewsHandler) handleLog(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate,
-	user *discordgo.User, opts []*discordgo.ApplicationCommandInteractionDataOption) error {
+	user *discordgo.User, opts []*discordgo.ApplicationCommandInteractionDataOption,
+) error {
 	style := opts[0].StringValue()
 
 	floatAmount, err := strconv.ParseFloat(opts[1].StringValue(), 64)
@@ -133,8 +136,12 @@ func (h *BrewsHandler) handleLog(ctx context.Context, s *discordgo.Session, i *d
 		Amount:   floatAmount,
 	}
 
-	if err := h.Repo.Save(ctx, brew); err != nil {
+	if err := h.BrewRepo.Save(ctx, brew); err != nil {
 		return errors.Wrap(err, "could not save brew")
+	}
+
+	if err := h.refreshLeaderboard(ctx, user.ID, user.Username); err != nil {
+		return errors.Wrapf(err, "could not refresh leaderboard for user %s", user.ID)
 	}
 
 	message := fmt.Sprintf("%s brewed %0.2f gallons of %s!", name, floatAmount, style)
@@ -146,8 +153,9 @@ func (h *BrewsHandler) handleLog(ctx context.Context, s *discordgo.Session, i *d
 }
 
 func (h *BrewsHandler) handleList(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate,
-	user *discordgo.User) error {
-	brews, err := h.Repo.GetByUserID(ctx, user.ID)
+	user *discordgo.User,
+) error {
+	brews, err := h.BrewRepo.GetByUserID(ctx, user.ID, h.LeaderboardCutoff.String())
 	if err != nil {
 		return errors.Wrapf(err, "could not get brews for user %s", user.Username)
 	}
@@ -179,17 +187,18 @@ func (h *BrewsHandler) handleList(ctx context.Context, s *discordgo.Session, i *
 	message += "```\n" + builder.String() + "```"
 
 	if err := respondToChannel(s, i, message, true); err != nil {
-		return errors.Wrap(err, "could not respond with list message") // TODO: better errors
+		return errors.Wrap(err, "could not respond with list message")
 	}
 
 	return nil
 }
 
 func (h *BrewsHandler) handleDelete(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate,
-	user *discordgo.User, opts []*discordgo.ApplicationCommandInteractionDataOption) error {
+	user *discordgo.User, opts []*discordgo.ApplicationCommandInteractionDataOption,
+) error {
 	id := opts[0].StringValue()
 
-	brew, err := h.Repo.Get(ctx, id)
+	brew, err := h.BrewRepo.Get(ctx, id)
 	if err != nil {
 		return errors.Wrapf(err, "could not get brew %s", id)
 	}
@@ -202,8 +211,12 @@ func (h *BrewsHandler) handleDelete(ctx context.Context, s *discordgo.Session, i
 		return nil
 	}
 
-	if err := h.Repo.Delete(ctx, id); err != nil {
+	if err := h.BrewRepo.Delete(ctx, id); err != nil {
 		return errors.Wrapf(err, "could not delete brew %s", id)
+	}
+
+	if err := h.refreshLeaderboard(ctx, brew.UserID, brew.Username); err != nil {
+		return errors.Wrapf(err, "could not refresh leaderboard for user %s", brew.UserID)
 	}
 
 	if err := respondToChannel(s, i, fmt.Sprintf("Deleted %s's %s brew", user.Username, id), true); err != nil {
@@ -214,49 +227,20 @@ func (h *BrewsHandler) handleDelete(ctx context.Context, s *discordgo.Session, i
 }
 
 func (h *BrewsHandler) handleLeaderboard(ctx context.Context, s *discordgo.Session,
-	i *discordgo.InteractionCreate) error {
-	volumes := make(map[string]float64)
-	counts := make(map[string]int)
-
-	brews, err := h.Repo.GetAll(ctx)
+	i *discordgo.InteractionCreate,
+) error {
+	leaderboardEntries, err := h.LeaderboardRepo.GetAll(ctx)
 	if err != nil {
 		return errors.Wrap(err, "could not get brews")
 	}
 
-	if len(brews) == 0 {
+	if len(leaderboardEntries) == 0 {
 		if err := respondToChannel(s, i, "No Brews yet!", true); err != nil {
 			return errors.Wrap(err, "could not respond with no brews error")
 		}
 
 		return nil
 	}
-
-	for _, brew := range brews {
-		v, ok := volumes[brew.Username]
-		if !ok {
-			volumes[brew.Username] = brew.Amount
-			counts[brew.Username] = 1
-		} else {
-			volumes[brew.Username] = v + brew.Amount
-			counts[brew.Username]++
-		}
-	}
-
-	type leaderboardItem struct {
-		name   string
-		count  int
-		volume float64
-	}
-
-	leaderboard := make([]leaderboardItem, 0, len(volumes))
-
-	for name, volume := range volumes {
-		leaderboard = append(leaderboard, leaderboardItem{name: name, count: counts[name], volume: volume})
-	}
-
-	sort.Slice(leaderboard, func(i, j int) bool {
-		return leaderboard[i].volume > leaderboard[j].volume
-	})
 
 	var builder strings.Builder
 
@@ -269,10 +253,10 @@ func (h *BrewsHandler) handleLeaderboard(ctx context.Context, s *discordgo.Sessi
 		totalVolume float64
 	)
 
-	for i, item := range leaderboard {
-		fmt.Fprintf(writer, "%d\t%s\t%d\t%6.02f\t\n", i+1, item.name, item.count, item.volume)
-		totalCount += item.count
-		totalVolume += item.volume
+	for i, entry := range leaderboardEntries {
+		fmt.Fprintf(writer, "%d\t%s\t%d\t%6.02f\t\n", i+1, entry.Username, entry.Count, entry.Volume)
+		totalCount += entry.Count
+		totalVolume += entry.Volume
 	}
 
 	fmt.Fprintf(writer, "---------------------------------------\n")
@@ -291,6 +275,37 @@ func (h *BrewsHandler) handleLeaderboard(ctx context.Context, s *discordgo.Sessi
 
 	if err := respondToChannel(s, i, message, false); err != nil {
 		return errors.Wrap(err, "could not respond with leaderboard")
+	}
+
+	return nil
+}
+
+func (h *BrewsHandler) refreshLeaderboard(ctx context.Context, userID, username string) error {
+	brews, err := h.BrewRepo.GetByUserID(ctx, userID, h.LeaderboardCutoff.String())
+	if err != nil {
+		return errors.Wrapf(err, "could not get brew for user %s", userID)
+	}
+
+	var (
+		count  int
+		volume float64
+	)
+
+	for _, brew := range brews {
+		count++
+
+		volume += brew.Amount
+	}
+
+	entry := dynamo.LeaderboardEntry{
+		UserID:   userID,
+		Username: username,
+		Count:    count,
+		Volume:   volume,
+	}
+
+	if err := h.LeaderboardRepo.Save(ctx, &entry); err != nil {
+		return errors.Wrapf(err, "could not get save LeaderboardEntry for %s", userID)
 	}
 
 	return nil

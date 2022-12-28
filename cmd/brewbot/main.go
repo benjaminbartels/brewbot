@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -20,15 +21,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const localDynamoEndpoint = "http://dynamo:8000"
+const (
+	localDynamoEndpoint = "http://dynamo:8000"
+	cuttoffFormat       = "2006-01-02"
+)
 
 type config struct {
-	AWSRegion      string `default:"us-west-2"`
-	BrewTableName  string `default:"BeerBot-Brews"`
-	UseLocalDynamo bool   `default:"false"`
-	DiscordToken   string `required:"true"`
-	DiscordGuildID string `required:"true"`
-	Debug          bool   `default:"false"`
+	AWSRegion            string `default:"us-west-2"`
+	BrewTableName        string `default:"BeerBot-Brews"`
+	LeaderboardTableName string `default:"BeerBot-LeaderboardEntries"`
+	UseLocalDynamo       bool   `default:"false"`
+	DiscordToken         string `required:"true"`
+	DiscordGuildID       string `required:"true"`
+	LeaderboardCutoff    string `required:"true"`
+	Debug                bool   `default:"false"`
 }
 
 func main() {
@@ -92,10 +98,16 @@ func run(logger *logrus.Logger, cfg config) error {
 	}
 
 	brewRepo := dynamo.NewBrewRepo(dynamodb.NewFromConfig(awsCfg), cfg.BrewTableName)
+	leaderboardRepo := dynamo.NewLeaderboardRepo(dynamodb.NewFromConfig(awsCfg), cfg.LeaderboardTableName)
 
 	bot := discord.NewBot(session, cfg.DiscordGuildID, logger)
 
-	if err := handlers.NewAPI(bot, brewRepo, logger); err != nil {
+	cutoff, err := time.Parse(cuttoffFormat, cfg.LeaderboardCutoff)
+	if err != nil {
+		return errors.Wrapf(err, "could parse date %s", cfg.LeaderboardCutoff)
+	}
+
+	if err := handlers.NewAPI(bot, brewRepo, leaderboardRepo, cutoff, logger); err != nil {
 		return errors.Wrap(err, "could not create new API")
 	}
 

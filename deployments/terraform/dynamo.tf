@@ -15,12 +15,37 @@ resource "aws_dynamodb_table" "brews-table" {
     type = "S"
   }
 
+    attribute {
+    name = "createdAt"
+    type = "S"
+  }
+
   global_secondary_index {
     name            = "byUserId"
     hash_key        = "userId"
+    range_key       = "createdAt"
     write_capacity  = 5
     read_capacity   = 5
     projection_type = "ALL"
+  }
+}
+
+resource "aws_dynamodb_table" "leaderboard-table" {
+  name           = "BeerBot-LeaderboardEntries"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 10
+  write_capacity = 10
+  hash_key       = "userId"
+  range_key      = "count"
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
+    attribute {
+    name = "count"
+    type = "N"
   }
 }
 
@@ -46,6 +71,8 @@ data "aws_iam_policy_document" "brewbot_role_policy" {
     resources = [
       aws_dynamodb_table.brews-table.arn,
       "${aws_dynamodb_table.brews-table.arn}/index/*",
+      aws_dynamodb_table.leaderboard-table.arn,
+      "${aws_dynamodb_table.leaderboard-table.arn}/index/*",
 
     ]
   }
