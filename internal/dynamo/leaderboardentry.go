@@ -2,14 +2,12 @@ package dynamo
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 )
 
@@ -37,16 +35,12 @@ func NewLeaderboardRepo(client *dynamodb.Client, tableName string) *LeaderboardD
 }
 
 func (r *LeaderboardDB) Get(ctx context.Context, userID string) (*LeaderboardEntry, error) {
-	fmt.Println("!!!! Getting leaderboard entry for", userID)
-
 	getItemInput := &dynamodb.GetItemInput{
 		TableName: aws.String(r.tableName),
 		Key: map[string]types.AttributeValue{
 			"userId": &types.AttributeValueMemberS{Value: userID},
 		},
 	}
-
-	spew.Dump(getItemInput)
 
 	getItemOutput, err := r.client.GetItem(ctx, getItemInput)
 	if err != nil {

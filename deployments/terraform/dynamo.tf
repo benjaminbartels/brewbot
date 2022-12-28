@@ -36,16 +36,10 @@ resource "aws_dynamodb_table" "leaderboard-table" {
   read_capacity  = 10
   write_capacity = 10
   hash_key       = "userId"
-  range_key      = "count"
 
   attribute {
     name = "userId"
     type = "S"
-  }
-
-    attribute {
-    name = "count"
-    type = "N"
   }
 }
 

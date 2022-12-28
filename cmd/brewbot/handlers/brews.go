@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -241,6 +242,10 @@ func (h *BrewsHandler) handleLeaderboard(ctx context.Context, s *discordgo.Sessi
 
 		return nil
 	}
+
+	sort.Slice(leaderboardEntries, func(i, j int) bool {
+		return leaderboardEntries[i].Volume > leaderboardEntries[j].Volume
+	})
 
 	var builder strings.Builder
 
