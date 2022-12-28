@@ -281,18 +281,29 @@ func (h *BrewsHandler) handleLeaderboard(ctx context.Context, s *discordgo.Sessi
 }
 
 func (h *BrewsHandler) refreshLeaderboard(ctx context.Context, userID string) error {
-	entry, err := h.LeaderboardRepo.Get(ctx, userID)
-	if err != nil {
-		return errors.Wrapf(err, "could not get brew for user %s", userID)
-	}
-
-	entry.Count = 0
-	entry.Volume = 0
-
 	brews, err := h.BrewRepo.GetByUserID(ctx, userID, h.LeaderboardCutoff.String())
 	if err != nil {
 		return errors.Wrapf(err, "could not get brew for user %s", userID)
 	}
+
+	if len(brews) == 0 {
+		return errors.New("no brews found")
+	}
+
+	entry, err := h.LeaderboardRepo.Get(ctx, userID)
+	if err != nil {
+		return errors.Wrapf(err, "could not get leaderboard entry for user %s", userID)
+	}
+
+	if entry == nil {
+		entry = &dynamo.LeaderboardEntry{
+			UserID:   userID,
+			Username: brews[0].Username,
+		}
+	}
+
+	entry.Count = 0
+	entry.Volume = 0
 
 	for _, brew := range brews {
 		entry.Count++

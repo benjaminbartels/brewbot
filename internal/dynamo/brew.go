@@ -46,7 +46,7 @@ func (r *BrewDB) Get(ctx context.Context, id string) (*Brew, error) {
 
 	getItemOutput, err := r.client.GetItem(ctx, getItemInput)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not get item")
+		return nil, errors.Wrap(err, "could not get brew item")
 	}
 
 	if getItemOutput.Item == nil || len(getItemOutput.Item) == 0 {
@@ -57,7 +57,7 @@ func (r *BrewDB) Get(ctx context.Context, id string) (*Brew, error) {
 
 	err = attributevalue.UnmarshalMap(getItemOutput.Item, brew)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not unmarshal item")
+		return nil, errors.Wrap(err, "could not unmarshal brew item")
 	}
 
 	return brew, nil
@@ -85,7 +85,7 @@ func (r *BrewDB) GetByUserID(ctx context.Context, userID, createdAfter string) (
 
 	queryOutput, err := r.client.Query(ctx, queryInput)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not query items")
+		return nil, errors.Wrap(err, "could not query brew items")
 	}
 
 	if queryOutput == nil || queryOutput.Items == nil || len(queryOutput.Items) == 0 {
@@ -96,7 +96,7 @@ func (r *BrewDB) GetByUserID(ctx context.Context, userID, createdAfter string) (
 
 	err = attributevalue.UnmarshalListOfMaps(queryOutput.Items, &brews)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not unmarshal items")
+		return nil, errors.Wrap(err, "could not unmarshal brew items")
 	}
 
 	return brews, nil
@@ -117,7 +117,7 @@ func (r *BrewDB) Save(ctx context.Context, brew *Brew) error {
 
 	avMap, err := attributevalue.MarshalMap(brew)
 	if err != nil {
-		return errors.Wrap(err, "could not marshal item")
+		return errors.Wrap(err, "could not marshal brew item")
 	}
 
 	putItemInput := &dynamodb.PutItemInput{
@@ -126,7 +126,7 @@ func (r *BrewDB) Save(ctx context.Context, brew *Brew) error {
 	}
 
 	if _, err := r.client.PutItem(ctx, putItemInput); err != nil {
-		return errors.Wrap(err, "could put item")
+		return errors.Wrap(err, "could put brew item")
 	}
 
 	return nil
@@ -141,7 +141,7 @@ func (r *BrewDB) Delete(ctx context.Context, id string) error {
 	}
 
 	if _, err := r.client.DeleteItem(ctx, deleteItemInput); err != nil {
-		return errors.Wrap(err, "could delete item")
+		return errors.Wrap(err, "could delete brew item")
 	}
 
 	return nil

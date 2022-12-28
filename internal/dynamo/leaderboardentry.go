@@ -44,7 +44,7 @@ func (r *LeaderboardDB) Get(ctx context.Context, userID string) (*LeaderboardEnt
 
 	getItemOutput, err := r.client.GetItem(ctx, getItemInput)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not get item")
+		return nil, errors.Wrap(err, "could not get leaderboard entry item")
 	}
 
 	if getItemOutput.Item == nil || len(getItemOutput.Item) == 0 {
@@ -55,7 +55,7 @@ func (r *LeaderboardDB) Get(ctx context.Context, userID string) (*LeaderboardEnt
 
 	err = attributevalue.UnmarshalMap(getItemOutput.Item, leaderboardEntry)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not unmarshal item")
+		return nil, errors.Wrap(err, "could not unmarshal leaderboard entry item")
 	}
 
 	return leaderboardEntry, nil
@@ -68,7 +68,7 @@ func (r *LeaderboardDB) GetAll(ctx context.Context) ([]LeaderboardEntry, error) 
 
 	scanOutput, err := r.client.Scan(ctx, scanInput)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not scan items")
+		return nil, errors.Wrap(err, "could not scan leaderboard entry items")
 	}
 
 	if scanOutput == nil || scanOutput.Items == nil || len(scanOutput.Items) == 0 {
@@ -79,7 +79,7 @@ func (r *LeaderboardDB) GetAll(ctx context.Context) ([]LeaderboardEntry, error) 
 
 	err = attributevalue.UnmarshalListOfMaps(scanOutput.Items, &leaderboardEntries)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not unmarshal items")
+		return nil, errors.Wrap(err, "could not unmarshal leaderboard entry items")
 	}
 
 	return leaderboardEntries, nil
@@ -100,7 +100,7 @@ func (r *LeaderboardDB) Save(ctx context.Context, leaderboardEntry *LeaderboardE
 
 	avMap, err := attributevalue.MarshalMap(leaderboardEntry)
 	if err != nil {
-		return errors.Wrap(err, "could not marshal item")
+		return errors.Wrap(err, "could not marshal leaderboard entry item")
 	}
 
 	putItemInput := &dynamodb.PutItemInput{
@@ -109,7 +109,7 @@ func (r *LeaderboardDB) Save(ctx context.Context, leaderboardEntry *LeaderboardE
 	}
 
 	if _, err := r.client.PutItem(ctx, putItemInput); err != nil {
-		return errors.Wrap(err, "could put item")
+		return errors.Wrap(err, "could put leaderboard entry item")
 	}
 
 	return nil
