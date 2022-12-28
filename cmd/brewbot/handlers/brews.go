@@ -140,7 +140,7 @@ func (h *BrewsHandler) handleLog(ctx context.Context, s *discordgo.Session, i *d
 		return errors.Wrap(err, "could not save brew")
 	}
 
-	if err := h.refreshLeaderboard(ctx, user.ID, user.Username); err != nil {
+	if err := h.refreshLeaderboard(ctx, user.ID); err != nil {
 		return errors.Wrapf(err, "could not refresh leaderboard for user %s", user.ID)
 	}
 
@@ -215,7 +215,7 @@ func (h *BrewsHandler) handleDelete(ctx context.Context, s *discordgo.Session, i
 		return errors.Wrapf(err, "could not delete brew %s", id)
 	}
 
-	if err := h.refreshLeaderboard(ctx, brew.UserID, brew.Username); err != nil {
+	if err := h.refreshLeaderboard(ctx, brew.UserID); err != nil {
 		return errors.Wrapf(err, "could not refresh leaderboard for user %s", brew.UserID)
 	}
 
@@ -280,7 +280,7 @@ func (h *BrewsHandler) handleLeaderboard(ctx context.Context, s *discordgo.Sessi
 	return nil
 }
 
-func (h *BrewsHandler) refreshLeaderboard(ctx context.Context, userID, username string) error {
+func (h *BrewsHandler) refreshLeaderboard(ctx context.Context, userID string) error {
 	brews, err := h.BrewRepo.GetByUserID(ctx, userID, h.LeaderboardCutoff.String())
 	if err != nil {
 		return errors.Wrapf(err, "could not get brew for user %s", userID)
@@ -299,7 +299,7 @@ func (h *BrewsHandler) refreshLeaderboard(ctx context.Context, userID, username 
 
 	entry := dynamo.LeaderboardEntry{
 		UserID:   userID,
-		Username: username,
+		Username: brews[0].Username,
 		Count:    count,
 		Volume:   volume,
 	}
