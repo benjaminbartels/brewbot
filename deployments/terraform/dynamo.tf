@@ -1,8 +1,6 @@
 resource "aws_dynamodb_table" "brews-table" {
   name           = "BeerBot-Brews"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = 10
-  write_capacity = 10
+  billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "id"
 
   attribute {
@@ -32,9 +30,7 @@ resource "aws_dynamodb_table" "brews-table" {
 
 resource "aws_dynamodb_table" "leaderboard-table" {
   name           = "BeerBot-LeaderboardEntries"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = 10
-  write_capacity = 10
+  billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "userId"
 
   attribute {
