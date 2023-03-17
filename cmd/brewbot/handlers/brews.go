@@ -33,7 +33,7 @@ type BrewsHandler struct {
 func BrewCommand() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        brewCommand,
-		Description: "Issues commands to BrewBot",
+		Description: "Issues brew realted commands to BrewBot",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        logSubCommand,

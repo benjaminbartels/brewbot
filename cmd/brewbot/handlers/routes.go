@@ -25,7 +25,11 @@ func NewAPI(bot *discord.Bot, brewRepo dynamo.BrewRepo, leaderboardRepo dynamo.L
 	}
 
 	if err := bot.AddCommand(BrewCommand()); err != nil {
-		return errors.Wrap(err, "could not add 'log' command")
+		return errors.Wrap(err, "could not add 'brew' command")
+	}
+
+	if err := bot.AddCommand(StyleCommand()); err != nil {
+		return errors.Wrap(err, "could not add 'style' command")
 	}
 
 	bot.AddHandler("brew", brewsHandler.BrewHandler)

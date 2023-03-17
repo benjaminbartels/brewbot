@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	styleCommand     = "styles"
 	randomSubCommand = "rand"
 )
 
@@ -19,8 +20,8 @@ type StylesHandler struct {
 
 func StyleCommand() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
-		Name:        brewCommand,
-		Description: "Issues commands to BrewBot",
+		Name:        styleCommand,
+		Description: "Issues style realted commands to BrewBot",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        randomSubCommand,
@@ -59,7 +60,12 @@ func (h *StylesHandler) handleRandom(ctx context.Context, s *discordgo.Session,
 ) error {
 	style := h.StyleRepo.Random(ctx)
 
-	message := fmt.Sprintf("%s should brew a %s (%s - %s).", user.Username, style.Name, style.Number, style.CategoryName)
+	name := user.Username
+	if i.Member.Nick != "" {
+		name = i.Member.Nick
+	}
+
+	message := fmt.Sprintf("%s should brew a %s (%s - %s).", name, style.Name, style.Number, style.CategoryName)
 
 	if err := respondToChannel(s, i, message, false); err != nil {
 		return errors.Wrap(err, "could not respond with leaderboard")
