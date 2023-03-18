@@ -51,6 +51,7 @@ func (h *StylesHandler) StyleHandler(s *discordgo.Session, i *discordgo.Interact
 	ctx := context.Background()
 	subcommand := i.ApplicationCommandData().Options[0].Name
 	user := i.Member.User
+	opts := i.ApplicationCommandData().Options[0].Options
 
 	var err error
 
@@ -58,7 +59,7 @@ func (h *StylesHandler) StyleHandler(s *discordgo.Session, i *discordgo.Interact
 	case randomSubCommand:
 		err = h.handleRandom(ctx, s, i, user)
 	case infoSubCommand:
-		err = h.handleInfo(ctx, s, i, user)
+		err = h.handleInfo(ctx, s, i, user, opts)
 	}
 
 	if err != nil {
@@ -96,7 +97,7 @@ func (h *StylesHandler) handleInfo(ctx context.Context, s *discordgo.Session,
 ) error {
 	number := opts[0].StringValue()
 
-	style := h.StyleRepo.Get(ctx, number)
+	style := h.StyleRepo.Get(ctx, strings.ToUpper(number))
 	if style == nil {
 		if err := respondToChannel(s, i, fmt.Sprintf("Style %s not found", number), true); err != nil {
 			return errors.Wrap(err, "could not respond with not found error")

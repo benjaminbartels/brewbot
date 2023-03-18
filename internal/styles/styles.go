@@ -56,11 +56,19 @@ func NewStyleRepo(fileName string) (*StyleSource, error) {
 		return nil, errors.Wrapf(err, "could read %s", fileName)
 	}
 
-	s := StyleSource{}
+	s := StyleSource{
+		styles: make(map[string]Style),
+	}
 
-	err = json.Unmarshal(data, &s.styles)
+	styles := []Style{}
+
+	err = json.Unmarshal(data, &styles)
 	if err != nil {
 		return nil, errors.Wrap(err, "could unmarshal styles")
+	}
+
+	for _, style := range styles {
+		s.styles[style.Number] = style
 	}
 
 	return &s, nil
