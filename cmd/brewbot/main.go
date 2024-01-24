@@ -15,6 +15,7 @@ import (
 	"github.com/benjaminbartels/brewbot/internal/dynamo"
 	c "github.com/benjaminbartels/brewbot/internal/platform/context"
 	"github.com/benjaminbartels/brewbot/internal/platform/discord"
+	"github.com/benjaminbartels/brewbot/internal/styles"
 	"github.com/bwmarrin/discordgo"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
@@ -99,6 +100,10 @@ func run(logger *logrus.Logger, cfg config) error {
 
 	brewRepo := dynamo.NewBrewRepo(dynamodb.NewFromConfig(awsCfg), cfg.BrewTableName)
 	leaderboardRepo := dynamo.NewLeaderboardRepo(dynamodb.NewFromConfig(awsCfg), cfg.LeaderboardTableName)
+	stylesRepo, err := styles.NewStyleRepo("styles.json")
+	if err != nil {
+		return errors.Wrap(err, "could create new style repo")
+	}
 
 	bot := discord.NewBot(session, cfg.DiscordGuildID, logger)
 
@@ -107,7 +112,7 @@ func run(logger *logrus.Logger, cfg config) error {
 		return errors.Wrapf(err, "could parse date %s", cfg.LeaderboardCutoff)
 	}
 
-	if err := handlers.NewAPI(bot, brewRepo, leaderboardRepo, cutoff, logger); err != nil {
+	if err := handlers.NewAPI(bot, brewRepo, leaderboardRepo, stylesRepo, cutoff, logger); err != nil {
 		return errors.Wrap(err, "could not create new API")
 	}
 

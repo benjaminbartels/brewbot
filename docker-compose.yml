@@ -1,6 +1,7 @@
 version: "3.9"
 services:
   brewbot:
+    restart: always
     build: .
     image: brewbot
     env_file:
