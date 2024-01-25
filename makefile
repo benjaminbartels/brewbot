@@ -24,7 +24,7 @@ all: help
 ## Build:
 build: ## Build the default go package and put the output binary in out/bin/
 	mkdir -p out/bin
-	GOOS=linux GOARCH=arm CGO_ENABLED=0 $(GOCMD) build -a -ldflags="-w -s -extldflags '-static'" -o out/bin/$(BINARY_NAME) ./$(MAIN_DIR)
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GOCMD) build -a -ldflags="-w -s -extldflags '-static'" -o out/bin/$(BINARY_NAME) ./$(MAIN_DIR)
 
 clean: ## Remove build and coverage related file
 	rm -fr out $(MAIN_DIR)/tmp
