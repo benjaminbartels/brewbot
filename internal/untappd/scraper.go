@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-errors/errors"
-	"github.com/gocolly/colly"
+	"github.com/gocolly/colly/v2"
 )
 
 const base = "https://untappd.com/v/"

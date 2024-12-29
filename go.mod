@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.13.0
 	github.com/bwmarrin/discordgo v0.23.3-0.20220202194601-aba5dc811da8
 	github.com/go-errors/errors v1.5.1
-	github.com/gocolly/colly v1.2.0
+	github.com/gocolly/colly/v2 v2.1.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
