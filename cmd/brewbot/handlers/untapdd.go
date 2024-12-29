@@ -44,7 +44,7 @@ func UntapddCommand() *discordgo.ApplicationCommand {
 				Options: []*discordgo.ApplicationCommandOption{
 					{
 						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "venueName",
+						Name:        "name",
 						Description: "Name of the venue",
 						Required:    true,
 					},
@@ -57,7 +57,7 @@ func UntapddCommand() *discordgo.ApplicationCommand {
 				Options: []*discordgo.ApplicationCommandOption{
 					{
 						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "venueName",
+						Name:        "name",
 						Description: "Name of the venue",
 						Required:    true,
 					},
