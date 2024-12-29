@@ -1,4 +1,4 @@
-FROM golang:1.17 as builder
+FROM golang:1.23 AS builder
 
 WORKDIR /src
 
@@ -6,7 +6,7 @@ COPY . .
 
 RUN make build
 
-FROM scratch as production
+FROM scratch AS production
 
 WORKDIR /
 
