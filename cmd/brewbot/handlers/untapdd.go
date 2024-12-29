@@ -122,7 +122,7 @@ func (h *UntapddHandler) handleMenu(_ context.Context, s *discordgo.Session,
 	for _, menu := range menus {
 		builder.WriteString(fmt.Sprintf("__**%s**__\n", menu.Name))
 		for _, i := range menu.Items {
-			builder.WriteString(fmt.Sprintf("**%s:** *%s* (%s) %s%% ABV - %s IBU\n",
+			builder.WriteString(fmt.Sprintf("**%s** *%s* (%s) %s ABV - %s IBU\n",
 				i.Name, i.Brewery, i.Style, i.ABV, i.IBU))
 		}
 	}
@@ -153,12 +153,16 @@ func (h *UntapddHandler) handleLeaderboard(_ context.Context, s *discordgo.Sessi
 
 	var builder strings.Builder
 
-	writer := tabwriter.NewWriter(&builder, 0, 5, 2, ' ', 0)
+	writer := tabwriter.NewWriter(&builder, 0, 4, 2, ' ', 0)
 
 	fmt.Fprintln(writer, "\tName\tCheck-Ins")
 
 	for _, p := range patrons {
 		fmt.Fprintf(writer, "%d\t%s\t%d\t\n", p.Rank, p.Name, p.CheckIns)
+	}
+
+	if err := writer.Flush(); err != nil {
+		return errors.Wrap(err, "could not flush to channel")
 	}
 
 	message := fmt.Sprintf("%s Top Check-ins", strings.ToUpper(venueName))
