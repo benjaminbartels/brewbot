@@ -32,8 +32,15 @@ func NewAPI(bot *discord.Bot, brewRepo dynamo.BrewRepo, leaderboardRepo dynamo.L
 		return errors.Wrap(err, "could not add 'style' command")
 	}
 
+	if err := bot.AddCommand(UntapddCommand()); err != nil {
+		return errors.Wrap(err, "could not add 'untapdd' command")
+	}
+
+	untapddHandler := NewUntapddHandler()
+
 	bot.AddHandler("brew", brewsHandler.BrewHandler)
 	bot.AddHandler("styles", stylesHandler.StyleHandler)
+	bot.AddHandler("untapdd", untapddHandler.UntapddHandler)
 
 	return nil
 }
