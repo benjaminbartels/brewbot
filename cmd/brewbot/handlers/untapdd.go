@@ -119,7 +119,7 @@ func (h *UntapddHandler) handleMenu(_ context.Context, s *discordgo.Session,
 	var builder strings.Builder
 
 	for _, menu := range menus {
-		builder.WriteString(fmt.Sprintf("__**%s**__\n", menu))
+		builder.WriteString(fmt.Sprintf("__**%s**__\n", menu.Name))
 		for _, i := range menu.Items {
 			builder.WriteString(fmt.Sprintf("**%s:** *%s* (%s) %s%% ABV - %s IBU\n",
 				i.Name, i.Brewery, i.Style, i.ABV, i.IBU))
@@ -156,7 +156,9 @@ func (h *UntapddHandler) handleLeaderboard(_ context.Context, s *discordgo.Sessi
 		builder.WriteString(fmt.Sprintf("%2d : %4d %s\n", p.Rank, p.CheckIns, p.Name))
 	}
 
-	if err := respondToChannel(s, i, builder.String(), false); err != nil {
+	message := "```\n" + builder.String() + "```"
+
+	if err := respondToChannel(s, i, message, false); err != nil {
 		return errors.Wrap(err, "could not respond with leaderboard")
 	}
 
