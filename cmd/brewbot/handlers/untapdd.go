@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/benjaminbartels/brewbot/internal/untappd"
 	"github.com/bwmarrin/discordgo"
@@ -152,11 +153,17 @@ func (h *UntapddHandler) handleLeaderboard(_ context.Context, s *discordgo.Sessi
 
 	var builder strings.Builder
 
+	writer := tabwriter.NewWriter(&builder, 0, 5, 2, ' ', 0)
+
+	fmt.Fprintln(writer, "\tName\tCheck-Ins")
+
 	for _, p := range patrons {
-		builder.WriteString(fmt.Sprintf("%2d : %4d %s\n", p.Rank, p.CheckIns, p.Name))
+		fmt.Fprintf(writer, "%d\t%s\t%d\t\n", p.Rank, p.Name, p.CheckIns)
 	}
 
-	message := "```\n" + builder.String() + "```"
+	message := fmt.Sprintf("%s Top Check-ins", strings.ToUpper(venueName))
+
+	message += "```\n" + builder.String() + "```"
 
 	if err := respondToChannel(s, i, message, false); err != nil {
 		return errors.Wrap(err, "could not respond with leaderboard")
